@@ -1,5 +1,6 @@
 package com.voldemarich.ShadowOrgs;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -71,7 +72,7 @@ public class OrgsManager {
 
     private Organization findOrganizationByName(String name){
         for(Iterator<Organization> i = global_orgs.iterator(); i.hasNext(); ) {
-            if(i.next().name == name){
+            if(i.next().name.equals(name)){
                 return i.next();
             }
         }
@@ -102,11 +103,46 @@ public class OrgsManager {
     private void specificExecutor(CommandSender sender, String command, String[] args){
         //Organization wt = findOrganizationByName(args[0]);
         if(command.equals("create") && findOrganizationByName(args[0]) == null && (sender instanceof Player)){
-            global_orgs.add(new Organization(args[0], (Player)sender)); //TODO console resolving
+            global_orgs.add(new Organization(args[0], (Player) sender)); //TODO console resolving
 
         }
         if(command.equals("delete") && findOrganizationByName(args[0]) != null){
             global_orgs.remove(findOrganizationByName(args[0])); //TODO console resolving
+
+        }
+        if(command.equals("addmember") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).addMember((Player)Bukkit.getServer().getOfflinePlayer(args[1]));
+
+        }
+        if(command.equals("addmoder") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).addModer((Player)Bukkit.getServer().getOfflinePlayer(args[1]));
+        }
+        if(command.equals("addadmin") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).addAdmin((Player)Bukkit.getServer().getOfflinePlayer(args[1]));
+
+        }
+        if(command.equals("removemember") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).removeMember((Player)Bukkit.getServer().getOfflinePlayer(args[1]));
+
+        }
+        if(command.equals("removemoder") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).removeModer((Player)Bukkit.getServer().getOfflinePlayer(args[1]));
+
+        }
+        if(command.equals("removeadmin") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).removeAdmin((Player)Bukkit.getServer().getOfflinePlayer(args[1]));
+
+        }
+        if(command.equals("moneygive") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).depositFunds((Player) sender, Double.parseDouble(args[1]));
+
+        }
+        if(command.equals("moneyget") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).withdrawFunds((Player) sender, Double.parseDouble(args[1]));
+
+        }
+        if(command.equals("moneyset") && findOrganizationByName(args[0]) != null){
+            findOrganizationByName(args[0]).setFunds(Double.parseDouble(args[1]));
 
         }
     }
