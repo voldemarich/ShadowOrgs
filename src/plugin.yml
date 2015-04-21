@@ -1,0 +1,13 @@
+name: ShadowOrgs
+version: 0.1
+description: ShadowLand server organisation manager
+author: voldemarich
+depend: [Vault]
+main: com.voldemarich.ShadowOrgs.ShadowOrgs
+
+commands:
+   orgs:
+      description: Dies command gives access to organizations options!
+      usage: /<command> [action]
+      permission: <plugin name>.orgs
+      permission-message: You don't have <permission>
