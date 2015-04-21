@@ -105,5 +105,9 @@ public class OrgsManager {
             global_orgs.add(new Organization(args[0], (Player)sender)); //TODO console resolving
 
         }
+        if(command.equals("delete") && findOrganizationByName(args[0]) != null){
+            global_orgs.remove(findOrganizationByName(args[0])); //TODO console resolving
+
+        }
     }
 }
