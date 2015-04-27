@@ -6,44 +6,36 @@ import java.util.Set;
 
 /**
  * Created by voldemarich on 21.04.15.
+ * General organization class. Contains registry of members, id, balance and methods
  */
 public class Organization {
-    public String name;
+    public String string_id;
     private Set<Player> admins;
     private Set<Player> moders;
-    private Set<Player> members;
+    private Set<Player> members; //Todo dictionary/tuple array (player, right)
     private String bank;
     private double money;
 
 
-    public Organization(String name, Player owner){
-        this.name = name;
+    public Organization(String string_id, Player owner/*,  Set<Player> admins, Set<Player> moders, Set<Player> members*/){ //TODO resolve nulls
+        this.string_id = string_id;
         addAdmin(owner);
-        bank = "orgbank_"+name;
+        bank = "orgbank_"+ string_id;
         ShadowOrgs.econ.createBank(bank, owner.getName());
         money = ShadowOrgs.econ.bankBalance(bank).balance;
 
     }
 
     public boolean isMember(Player player){
-        if(members.contains(player)){
-            return true;
-        }
-        else return false;
+        return members.contains(player);
     }
 
     public boolean isModer(Player player){
-        if(moders.contains(player)){
-            return true;
-        }
-        else return false;
+        return moders.contains(player);
     }
 
     public boolean isAdmin(Player player){
-        if(admins.contains(player)){
-            return true;
-        }
-        else return false;
+        return admins.contains(player);
     }
 
     public void addMember(Player player){
@@ -114,5 +106,4 @@ public class Organization {
         }
         money = ShadowOrgs.econ.bankBalance(bank).balance;
     }
-
 }

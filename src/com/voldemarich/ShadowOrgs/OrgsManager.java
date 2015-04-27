@@ -9,6 +9,7 @@ import java.util.Set;
 
 /**
  * Created by voldemarich on 21.04.15.
+ * Piece-of-shit code for command processing and organization management
  */
 
 class ResolvableCommand{
@@ -72,7 +73,7 @@ public class OrgsManager {
 
     private Organization findOrganizationByName(String name){
         for(Iterator<Organization> i = global_orgs.iterator(); i.hasNext(); ) {
-            if(i.next().name.equals(name)){
+            if(i.next().string_id.equals(name)){
                 return i.next();
             }
         }

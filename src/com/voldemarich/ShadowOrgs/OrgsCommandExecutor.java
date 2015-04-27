@@ -1,12 +1,12 @@
 package com.voldemarich.ShadowOrgs;
 
-import com.voldemarich.ShadowOrgs.ShadowOrgs;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 /**
  * Created by voldemarich on 20.04.15.
+ * Command execution grabbed to separate file
  */
 public class OrgsCommandExecutor implements CommandExecutor{
 
@@ -29,7 +29,7 @@ public class OrgsCommandExecutor implements CommandExecutor{
                 }
             }
             catch (Exception e){
-
+                ActionBroadcaster.getInstance().yell("Exception: "+e.getMessage());
             }
         }
         return false;
