@@ -32,12 +32,11 @@ public class Organization {
             return members.containsKey(player.getName());
     }
 
-    public boolean isModer(Player player) {
-        return isMember(player) && members.get(player.getName()) == 1;
-    }
-
-    public boolean isAdmin(Player player){
-        return isMember(player) && members.get(player.getName()) >= 2;
+    public int getRight(Player player){
+        if(isMember(player)){
+            return members.get(player.getName());
+        }
+        else return -1;
     }
 
     public void addMember(Player player, int right){
