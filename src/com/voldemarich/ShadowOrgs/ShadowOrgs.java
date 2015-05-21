@@ -18,7 +18,7 @@ public class ShadowOrgs extends JavaPlugin {
         getLogger().info("ShadowLand Organizations Plugin initialized successfully");
         if(getConfig().getBoolean("Enabled")) {
             //getServer().getPluginManager().registerEvents(new TerritoryClaimListener(), this); //Linking the command listener
-            this.getCommand("orgs").setExecutor(new OrgsCommandExecutor(this));
+            this.getCommand("orgs").setExecutor(new OrgsCommandExecutor(this, OrgsManager.getInstance()));
         }
     }
 

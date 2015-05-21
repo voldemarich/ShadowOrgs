@@ -1,113 +1,47 @@
 package com.voldemarich.ShadowOrgs;
 
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Iterator;
-import java.util.Set;
+import java.util.HashMap;
 
 /**
- * Created by voldemarich on 21.04.15.
+ * Created by voldemarich on 17.05.15.
  */
-
-class ResolvableCommand{
-    public String command;
-    public int securitylevel;
-    public int arguments;
-    public boolean setargs;
-
-    public ResolvableCommand(String cmd, int sec, int args, boolean set){
-        command=cmd;
-        securitylevel = sec;
-        arguments = args;
-        setargs = set;
-    }
-
-    public boolean verify(String label, String[] args, int securitylevel){
-        if(securitylevel >= this.securitylevel && args.length <= arguments && command.equals(label)){
-            if(args.length != arguments && setargs){
-                return false;
-            }
-            else return true;
-        }
-        else return false;
-    }
-
-}
-
 public class OrgsManager {
+    private static OrgsManager ourInstance = new OrgsManager();
 
-
-    private Set<ResolvableCommand> commandset;
-
-    public Set<Organization> global_orgs;
-
-    public OrgsManager(){
-        //global_orgs = OrgsDatabaseController.loaddb();
-        commandset.add(new ResolvableCommand("create", 0, 1, false));
-        commandset.add(new ResolvableCommand("delete", 3, 1, true));
-        commandset.add(new ResolvableCommand("addmember", 2, 2, false));
-        commandset.add(new ResolvableCommand("addmoder", 3, 2, false));
-        commandset.add(new ResolvableCommand("addadmin", 3, 2, false));
-        commandset.add(new ResolvableCommand("removemember", 2, 2, false));
-        commandset.add(new ResolvableCommand("removemoder", 3, 2, false));
-        commandset.add(new ResolvableCommand("removeadmin", 3, 2, false));
-        commandset.add(new ResolvableCommand("moneygive", 1, 2, false));
-        commandset.add(new ResolvableCommand("moneyget", 1, 2, false));
-        commandset.add(new ResolvableCommand("moneyset", 4, 2, false));
+    public static OrgsManager getInstance() {
+        return ourInstance;
     }
 
-    public boolean resolve(CommandSender sender, String command, String[] args){
-        int sl = securityLevel(sender, args[0]);
-        for(Iterator<ResolvableCommand> i = commandset.iterator(); i.hasNext(); ) {
-            if(i.next().verify(command, args, sl)){
-                specificExecutor(sender, command, args);
-            }
-        }
-        ActionBroadcaster.getInstance().tell(sender, "Command unresolved, try again");
-        ActionBroadcaster.getInstance().log(sender.getName()+" failed to use orgs");
-        return false;
+    private HashMap<String, Organization> organizations;
+
+    private OrgsManager() {
+
     }
 
-    private Organization findOrganizationByName(String name){
-        for(Iterator<Organization> i = global_orgs.iterator(); i.hasNext(); ) {
-            if(i.next().name == name){
-                return i.next();
-            }
+    public Organization createOrganization(String name, Player owner) throws OrganizationException{
+        if(!organizations.containsKey(name)){
+            Organization org = new Organization(name, owner);
+            organizations.put(name, org);
+            //DATABASE
+            return org;
         }
-        return null; //TODO exception
+        else throw new OrganizationException("Dat org already exists, man");
     }
 
-    private int securityLevel(CommandSender sender, String orgname){
-        if(sender instanceof Player){
-            if(sender.hasPermission("shadoworgs.admin") || sender.isOp()){
-                return 4;
-            }
-            if(findOrganizationByName(orgname) != null) {
-                if (findOrganizationByName(orgname).isAdmin((Player) sender)) {
-                    return 3;
-                }
-                if (findOrganizationByName(orgname).isModer((Player) sender)) {
-                    return 2;
-                }
-                if (findOrganizationByName(orgname).isMember((Player) sender)) {
-                    return 1;
-                }
-            }
-            else return 0;
+    public void deleteOrganization(String name) throws OrganizationException{
+        if(organizations.containsKey(name)){
+            organizations.remove(name);
+            //DATABASE
         }
-        return 4;
+        else throw new OrganizationException("Dat org does not exist, man");
     }
 
-    private void specificExecutor(CommandSender sender, String command, String[] args){
-        //Organization wt = findOrganizationByName(args[0]);
-        if(command.equals("create") && findOrganizationByName(args[0]) == null && (sender instanceof Player)){
-            global_orgs.add(new Organization(args[0], (Player)sender)); //TODO console resolving
-
+    public Organization getOrgByName(String name) throws OrganizationException{
+        if(organizations.containsKey(name)){
+            return organizations.get(name);
         }
-        if(command.equals("delete") && findOrganizationByName(args[0]) != null){
-            global_orgs.remove(findOrganizationByName(args[0])); //TODO console resolving
-
-        }
+        else throw new OrganizationException("Dat org does not exist, man");
     }
 }

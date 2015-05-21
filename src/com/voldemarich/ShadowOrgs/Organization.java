@@ -2,86 +2,56 @@ package com.voldemarich.ShadowOrgs;
 
 import org.bukkit.entity.Player;
 
-import java.util.Set;
+import java.util.HashMap;
 
 /**
  * Created by voldemarich on 21.04.15.
+ * General organization class. Contains registry of members, id, balance and methods
  */
 public class Organization {
-    public String name;
-    private Set<Player> admins;
-    private Set<Player> moders;
-    private Set<Player> members;
+
+    public String string_id;
+
+    private HashMap<String, Integer> members;
     private String bank;
-    private double money;
 
-
-    public Organization(String name, Player owner){
-        this.name = name;
-        addAdmin(owner);
-        bank = "orgbank_"+name;
+    public Organization(String string_id, Player owner){ //As the command of console
+        this.string_id = string_id;
+        addMember(owner, 2); //Add admin
+        bank = "orgbank_"+ string_id;
         ShadowOrgs.econ.createBank(bank, owner.getName());
-        money = ShadowOrgs.econ.bankBalance(bank).balance;
+    }
 
+    public Organization(String string_id, HashMap<String, Integer> members, String bank){ //As database loader object
+        this.string_id = string_id;
+        this.members = members;
+        this.bank = bank;
     }
 
     public boolean isMember(Player player){
-        if(members.contains(player)){
-            return true;
-        }
-        else return false;
+            return members.containsKey(player.getName());
     }
 
-    public boolean isModer(Player player){
-        if(moders.contains(player)){
-            return true;
+    public int getRight(Player player){
+        if(isMember(player)){
+            return members.get(player.getName());
         }
-        else return false;
+        else return -1;
     }
 
-    public boolean isAdmin(Player player){
-        if(admins.contains(player)){
-            return true;
-        }
-        else return false;
+    public void addMember(Player player, int right){
+        if(!isMember(player)) members.put(player.getName(), right);
     }
 
     public void addMember(Player player){
-        if(!members.contains(player)){
-            members.add(player);
-        }
+        if(!isMember(player)) members.put(player.getName(), 0);
     }
-    public void addModer(Player player){
-        if(!moders.contains(player)){
-            addMember(player);
-            moders.add(player);
-        }
-    }
-    public void addAdmin(Player player){
-        if(!admins.contains(player)){
-            addMember(player);
-            removeModer(player);
-            admins.add(player);
-        }
-    }
+
 
     public void removeMember(Player player){
-        if(members.contains(player)){
-            members.remove(player);
-        }
+        if(isMember(player)) members.remove(player.getName());
     }
 
-    public void removeModer(Player player){
-        if(moders.contains(player)){
-            moders.remove(player);
-        }
-    }
-
-    public void removeAdmin(Player player){
-        if(admins.contains(player)){
-            admins.remove(player);
-        }
-    }
 
     //Here goes economy
 
@@ -89,7 +59,6 @@ public class Organization {
         if(ShadowOrgs.econ.bankBalance(bank).balance >= amount){
             ShadowOrgs.econ.bankWithdraw(bank, amount);
             ShadowOrgs.econ.depositPlayer(player.getName(), amount);
-            money = ShadowOrgs.econ.bankBalance(bank).balance;
             return true;
         }
         else return false;
@@ -99,20 +68,13 @@ public class Organization {
         if(ShadowOrgs.econ.has(player.getName(), amount)){
             ShadowOrgs.econ.withdrawPlayer(player.getName(), amount);
             ShadowOrgs.econ.bankDeposit(bank, amount);
-            money = ShadowOrgs.econ.bankBalance(bank).balance;
             return true;
         }
         else return false;
     }
 
     public void setFunds(double amount){
-        if(money <= amount) {
-            ShadowOrgs.econ.bankDeposit(bank, amount-money);
-        }
-        else{
-            ShadowOrgs.econ.bankWithdraw(bank, money-amount);
-        }
-        money = ShadowOrgs.econ.bankBalance(bank).balance;
+        ShadowOrgs.econ.bankWithdraw(bank, ShadowOrgs.econ.bankBalance(bank).balance);
+        ShadowOrgs.econ.bankDeposit(bank, amount);
     }
-
 }
