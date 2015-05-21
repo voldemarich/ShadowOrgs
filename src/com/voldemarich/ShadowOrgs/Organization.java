@@ -39,13 +39,18 @@ public class Organization {
         else return -1;
     }
 
+    //Declarative commands, runner's rights should be checked before running.
+
+    public void setRight(Player player, int right){
+        if(isMember(player)) {
+            members.put(player.getName(), right);
+        }
+    }
+
     public void addMember(Player player, int right){
         if(!isMember(player)) members.put(player.getName(), right);
     }
 
-    public void addMember(Player player){
-        if(!isMember(player)) members.put(player.getName(), 0);
-    }
 
 
     public void removeMember(Player player){
@@ -54,9 +59,10 @@ public class Organization {
 
 
     //Here goes economy
+    //Economy uses it's own protection by right, so can be used without checking it one more time.
 
     public boolean withdrawFunds(Player player, double amount){
-        if(ShadowOrgs.econ.bankBalance(bank).balance >= amount){
+        if(ShadowOrgs.econ.bankBalance(bank).balance >= amount && getRight(player)>=0){
             ShadowOrgs.econ.bankWithdraw(bank, amount);
             ShadowOrgs.econ.depositPlayer(player.getName(), amount);
             return true;

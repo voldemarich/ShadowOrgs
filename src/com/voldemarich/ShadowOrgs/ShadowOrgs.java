@@ -6,11 +6,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Created by voldemarich on 20.04.15.
+ * General plugin class defining startup and quit actions.
  */
 public class ShadowOrgs extends JavaPlugin {
 
     public static Economy econ = null;
-    public static OrgsManager manager = null;
+
     @Override
     public void onEnable(){
         this.saveDefaultConfig();
@@ -18,7 +19,7 @@ public class ShadowOrgs extends JavaPlugin {
         getLogger().info("ShadowLand Organizations Plugin initialized successfully");
         if(getConfig().getBoolean("Enabled")) {
             //getServer().getPluginManager().registerEvents(new TerritoryClaimListener(), this); //Linking the command listener
-            this.getCommand("orgs").setExecutor(new OrgsCommandExecutor(this, OrgsManager.getInstance()));
+            this.getCommand("orgs").setExecutor(new OrgsCommandExecutor(OrgsManager.getInstance()));
         }
     }
 
