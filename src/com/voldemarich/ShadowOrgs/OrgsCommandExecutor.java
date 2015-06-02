@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
+
 /**
  * Created by voldemarich on 20.04.15.
  * Command execution grabbed to separate file
@@ -14,11 +15,13 @@ import org.bukkit.entity.Player;
 public class OrgsCommandExecutor implements CommandExecutor{
 
     private final OrgsManager manager;
-    private enum senders {PLAYER, ANY}
+    private enum senders {PLAYER, ANY};
+
 
     public OrgsCommandExecutor(OrgsManager manager) {
         this.manager = manager;
     }
+
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -39,11 +42,17 @@ public class OrgsCommandExecutor implements CommandExecutor{
                 return onCommandMoney(sender, args, 1);
             if (args[0].equals("withdraw") && args.length >= 3 && isEligible(sender, senders.PLAYER, "shadoworgs.basic"))
                 return onCommandMoney(sender, args, -1);
-            return args[0].equals("setmoney") && args.length >= 3 && isEligible(sender, senders.ANY, "shadoworgs.admin") && onCommandMoney(sender, args, 0);
+            if (args[0].equals("setmoney") && args.length >= 3 && isEligible(sender, senders.ANY, "shadoworgs.admin"))
+                return onCommandMoney(sender, args, 0);
+            if (args[0].equals("info") && args.length >= 2 && isEligible(sender, senders.ANY, "shadoworgs.basic"))
+                return onCommandInfo(sender, args);
+            if (args[0].equals("synchronize") && isEligible(sender, senders.ANY, "shadoworgs.admin"))
+                return onCommandSync();
+            return false;
         }
         catch (OrganizationException e) {
-            sender.sendMessage(e.getMessage());
-            return false;
+            ActionBroadcaster.getInstance().tell(sender, e.getMessage());
+            return true;
         }
     }
 
@@ -53,7 +62,7 @@ public class OrgsCommandExecutor implements CommandExecutor{
 
 
     private boolean onCommandEmpty(CommandSender sender){
-        sender.sendMessage("Wrong input, man");
+        ActionBroadcaster.getInstance().tell(sender, "§cNo input, man, read help:");
         return false;
     }
 
@@ -61,6 +70,7 @@ public class OrgsCommandExecutor implements CommandExecutor{
             if (action == 1) {
                 if (sender instanceof Player) {
                     manager.createOrganization(args[1], (Player) sender);
+                    ActionBroadcaster.getInstance().tell(sender, "§aYou've just created organization named " + args[1]);
                 }
                 if(sender instanceof ConsoleCommandSender){
                     manager.createOrganization(args[1], Bukkit.getPlayer(args[2]));
@@ -70,6 +80,7 @@ public class OrgsCommandExecutor implements CommandExecutor{
             if (action == -1) {
                 if (manager.hasOrgPermission(sender, args[1], 2)) {
                     manager.removeOrganization(args[1]);
+                    ActionBroadcaster.getInstance().tell(sender, "§eYou've just deleted organization named " + args[1]);
                 }
                 return true;
             }
@@ -118,5 +129,62 @@ public class OrgsCommandExecutor implements CommandExecutor{
             return false;
         }
 
+    private boolean onCommandSync(){
+        manager.saveAndSync();
+        return true;
+    }
 
+    
+    //TODO let the organization's admins define the permissions for viewing the info themselves
+    private boolean onCommandInfo(CommandSender sender, String[] args){
+        Organization in = manager.getOrgByName(args[1]);
+        StringBuilder sb = new StringBuilder();
+        sb.append("§eYou requested info on ");
+        sb.append(in.string_id);
+        sb.append("\n===================================================\n");
+        sb.append("Your access level here is: ");
+        if(sender.hasPermission("shadoworgs.admin")) {
+            sb.append(manager.rightnames.get(2));
+        }
+        else sb.append(manager.rightnames.get(in.getRight((Player)sender)));
+        sb.append("\n");
+        if(args.length == 2) sb.append("§eSpecify what you wanna know about this organization\nTry such keywords:\nmembers, rights, economy§f\n");
+        else{
+            if(args[2].equals("members") && manager.hasOrgPermission(sender, in.string_id, 0)){ //right here
+                sb.append("§eHere's the list of members in this organization:§b\n");
+                int cnt = 1;
+                for(Object o: in.members.keySet()){
+                    sb.append((String)o);
+                    if(cnt%5 == 0) sb.append(", ");
+                    else sb.append("\n");
+                    cnt++;
+                }
+
+            }
+            if(args[2].equals("rights") && manager.hasOrgPermission(sender, in.string_id, 1)){ //and here
+                int cnt = 1;
+                sb.append("§eHere's the list of members:rights in this organization:\n");
+                for(Object o: in.members.keySet()){
+                    sb.append("§e");
+                    sb.append((String)o);
+                    sb.append(":");
+                    sb.append(manager.rightnames.get(in.members.get(o)));
+                    if(cnt%5 == 0) sb.append(", ");
+                    else sb.append("\n");
+                    cnt++;
+                }
+            }
+            if(args[2].equals("economy") && manager.hasOrgPermission(sender, in.string_id, 0)){ //and here
+                sb.append("§eAccount of the organization is named: §4");
+                sb.append(in.bank);
+                sb.append("§e\n");
+                sb.append("Available funds:§a ");
+                sb.append(ShadowOrgs.econ.bankBalance(in.bank).balance);
+                sb.append("§f\n");
+            }
+            if(!manager.hasOrgPermission(sender, in.string_id, 0)) sb.append("§cInsufficient rights§f");
+        }
+        ActionBroadcaster.getInstance().tell(sender, sb.toString());
+        return true;
+    }
 }
