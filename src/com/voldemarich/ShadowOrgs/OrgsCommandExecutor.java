@@ -80,7 +80,7 @@ public class OrgsCommandExecutor implements CommandExecutor{
     private boolean onCommandMember(CommandSender sender, String[] args, int action) throws OrganizationException{
         if (action == 1) {
             if (manager.hasOrgPermission(sender, args[1], 1) || (args[3] != null && manager.hasOrgPermission(sender, args[1], 2))) {
-                if (args[3] != null) manager.addMember(args[1], Bukkit.getPlayer(args[2]), Integer.parseInt(args[3]));
+                if (args.length >= 4) manager.addMember(args[1], Bukkit.getPlayer(args[2]), Integer.parseInt(args[3]));
                 else manager.addMember(args[1], Bukkit.getPlayer(args[2]), 0);
                 return true;
             }
@@ -108,11 +108,11 @@ public class OrgsCommandExecutor implements CommandExecutor{
                 return true;
             }
             if (action == 0) {
-                manager.getOrgByName(args[1]).withdrawFunds((Player) sender, Double.parseDouble(args[2]));
+                manager.getOrgByName(args[1]).setFunds(Double.parseDouble(args[2]));
                 return true;
             }
             if (action == -1) {
-                manager.getOrgByName(args[1]).setFunds(Double.parseDouble(args[2]));
+                manager.getOrgByName(args[1]).withdrawFunds((Player) sender, Double.parseDouble(args[2]));
                 return true;
             }
             return false;

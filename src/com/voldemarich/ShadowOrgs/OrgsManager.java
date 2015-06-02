@@ -11,6 +11,8 @@ import java.util.HashMap;
  * Created by voldemarich on 17.05.15.
  * Bridge-like class used for managing organizations
  */
+
+//TODO normal logging
 public class OrgsManager {
     private static OrgsManager ourInstance = new OrgsManager();
 

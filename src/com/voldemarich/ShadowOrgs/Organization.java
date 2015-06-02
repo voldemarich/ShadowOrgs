@@ -16,6 +16,7 @@ public class Organization {
     public String bank;
 
     public Organization(String string_id, Player owner){ //As the command of console
+        members = new HashMap<String, Integer>();
         this.string_id = string_id;
         addMember(owner, 2); //Add admin
         bank = "orgbank_"+ string_id;
