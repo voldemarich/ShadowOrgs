@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 public class OrgsCommandExecutor implements CommandExecutor{
 
     private final OrgsManager manager;
-    private enum senders {CONSOLE, PLAYER, ANY}
+    private enum senders {PLAYER, ANY}
 
     public OrgsCommandExecutor(OrgsManager manager) {
         this.manager = manager;
@@ -77,7 +77,7 @@ public class OrgsCommandExecutor implements CommandExecutor{
 
     }
 
-    private boolean onCommandMember(CommandSender sender, String[] args, int action) {
+    private boolean onCommandMember(CommandSender sender, String[] args, int action) throws OrganizationException{
         if (action == 1) {
             if (manager.hasOrgPermission(sender, args[1], 1) || (args[3] != null && manager.hasOrgPermission(sender, args[1], 2))) {
                 if (args[3] != null) manager.addMember(args[1], Bukkit.getPlayer(args[2]), Integer.parseInt(args[3]));
