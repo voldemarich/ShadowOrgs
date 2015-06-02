@@ -6,7 +6,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 /**
  * Created by voldemarich on 17.05.15.
@@ -21,12 +20,14 @@ public class OrgsManager {
 
     private final Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("ShadowOrgs");
 
-    private final Logger logger = plugin.getLogger();
+    private final ActionBroadcaster logger = ActionBroadcaster.getInstance();
+
+    private final OrgsDatabaseController db = OrgsDatabaseController.getInstance();
 
     private HashMap<String, Organization> organizations;
 
-    private OrgsManager() {
-
+    public OrgsManager() {
+        organizations = db.readAll();
     }
 
     public boolean hasOrgPermission(CommandSender sender, String orgname, int permission) {
@@ -37,7 +38,7 @@ public class OrgsManager {
         if(!organizations.containsKey(name)){
             Organization org = new Organization(name, owner);
             organizations.put(name, org);
-            //DATABASE
+            db.writeSingleOrg(org);
             logger.info("Organization " + name + " created. Owner permissions granted to "+ owner.getName());
             return org;
         }
@@ -46,8 +47,8 @@ public class OrgsManager {
 
     public void removeOrganization(String name) throws OrganizationException{
         if(organizations.containsKey(name)){
+            db.removeSingleOrg(organizations.get(name));
             organizations.remove(name);
-            //DATABASE
             logger.info("Organization " + name + " deleted.");
         }
         else throw new OrganizationException("Dat org does not exist, man");
@@ -55,19 +56,22 @@ public class OrgsManager {
 
     public void addMember(String orgname, Player member, int right) throws OrganizationException{
         getOrgByName(orgname).addMember(member, right);
+        db.writeSingleOrg(organizations.get(orgname));
     }
 
     public void removeMember(String orgname, Player member) throws OrganizationException{
         getOrgByName(orgname).removeMember(member);
+        db.writeSingleOrg(organizations.get(orgname));
     }
 
     public void changeMemberRight(String orgname, Player member, int right) throws OrganizationException{
         getOrgByName(orgname).setRight(member, right);
+        db.writeSingleOrg(organizations.get(orgname));
     }
 
-
-
-
+    public void saveAndSync(){
+        db.writeAll(organizations);
+    }
 
     public Organization getOrgByName(String name) throws OrganizationException{
         if(organizations.containsKey(name)){

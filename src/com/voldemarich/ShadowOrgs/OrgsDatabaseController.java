@@ -19,7 +19,7 @@ public class OrgsDatabaseController {
     private final String tablename = "orgs_data";
     private Statement stmt = null;
 
-    public OrgsDatabaseController getInstance(){
+    public static OrgsDatabaseController getInstance(){
         if(instance == null) instance = new OrgsDatabaseController();
         return instance;
     }
@@ -61,16 +61,35 @@ public class OrgsDatabaseController {
         createTableIfNotExists(tablename, "id INTEGER PRIMARY KEY AUTOINCREMENT, string_id TEXT UNIQUE NOT NULL, bank TEXT NOT NULL, members TEXT NOT NULL");
     }
 
-    private void writeSingleOrg(Organization org) throws SQLException{
-        stmt.executeUpdate("INSERT OR REPLACE INTO "+tablename+" (id, string_id, bank, members) VALUES ((select id from "+tablename+" where string_id = \""+org.string_id+"\"), \""+org.string_id+"\", \""+org.bank+"\", \""+mapStringIntegerToSingleString(org.members)+"\")");
+    public void writeSingleOrg(Organization org){
+        try {
+            stmt.executeUpdate("INSERT OR REPLACE INTO " + tablename + " (id, string_id, bank, members) VALUES ((select id from " + tablename + " where string_id = \"" + org.string_id + "\"), \"" + org.string_id + "\", \"" + org.bank + "\", \"" + mapStringIntegerToSingleString(org.members) + "\")");
+        }
+        catch (SQLException e){
+            ActionBroadcaster.getInstance().yell("Failed to write org: "+e.getMessage());
+        }
+    }
+
+    public void removeSingleOrg(Organization org){
+        try {
+            stmt.executeUpdate("DELETE FROM "+tablename+" WHERE string_id=\""+org.string_id+"\"");
+        }
+        catch (SQLException e){
+            ActionBroadcaster.getInstance().yell("Failed to write org: "+e.getMessage());
+        }
     }
 
 
-    public void writeAll(HashMap<String, Organization> organizations) throws SQLException{
-        stmt.executeUpdate("DROP TABLE " + tablename);
-        createOrgsTable();
-        for (Object o : organizations.values()) {
-            writeSingleOrg((Organization)o);
+    public void writeAll(HashMap<String, Organization> organizations){
+        try {
+            stmt.executeUpdate("DROP TABLE " + tablename);
+            createOrgsTable();
+            for (Object o : organizations.values()) {
+                writeSingleOrg((Organization) o);
+            }
+        }
+        catch (SQLException e){
+            ActionBroadcaster.getInstance().yell("Failed to overwrite organization list: "+e.getMessage());
         }
     }
 
@@ -99,11 +118,16 @@ public class OrgsDatabaseController {
         return hs;
     }
 
-    public HashMap<String, Organization> readAll() throws SQLException{
-        ResultSet rs = stmt.executeQuery("SELECT * FROM "+tablename);
+    public HashMap<String, Organization> readAll(){
         HashMap<String, Organization> hs = new HashMap<String, Organization>();
-        while (rs.next()){
-            hs.put(rs.getString("string_id"), new Organization(rs.getString("string_id"), rs.getString("bank"), singleStringtoMapStringInteger(rs.getString("members"))));
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM " + tablename);
+            while (rs.next()) {
+                hs.put(rs.getString("string_id"), new Organization(rs.getString("string_id"), rs.getString("bank"), singleStringtoMapStringInteger(rs.getString("members"))));
+            }
+        }
+        catch (SQLException e){
+            ActionBroadcaster.getInstance().yell("Failed to load organization list: "+e.getMessage());
         }
         return hs;
     }

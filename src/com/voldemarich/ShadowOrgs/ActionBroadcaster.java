@@ -24,7 +24,7 @@ public class ActionBroadcaster {
         player.sendMessage(message);
     }
 
-    public void log(String message){
+    public void info(String message){
         logger.info(message);
     }
 

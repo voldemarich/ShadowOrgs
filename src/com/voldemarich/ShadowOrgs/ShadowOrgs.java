@@ -40,7 +40,7 @@ public class ShadowOrgs extends JavaPlugin {
 
     @Override
     public void onDisable(){
-
+        OrgsManager.getInstance().saveAndSync();
     }
 
 }
