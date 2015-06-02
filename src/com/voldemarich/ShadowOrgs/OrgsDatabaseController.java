@@ -4,7 +4,9 @@ import org.bukkit.Bukkit;
 
 import java.io.File;
 import java.sql.*;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created by voldemarich on 21.04.15.
@@ -14,9 +16,10 @@ public class OrgsDatabaseController {
 
     private static OrgsDatabaseController instance;
     private Connection connection;
-    private static final String tablename = "orgs_data";
+    private final String tablename = "orgs_data";
+    private Statement stmt = null;
 
-    public OrgsDatabaseController getInstance(){
+    public static OrgsDatabaseController getInstance(){
         if(instance == null) instance = new OrgsDatabaseController();
         return instance;
     }
@@ -24,9 +27,11 @@ public class OrgsDatabaseController {
     public OrgsDatabaseController(){
         try {
             connection = connect();
+            stmt = connection.createStatement();
+            createOrgsTable();
         }
         catch (Exception e){
-            ActionBroadcaster.getInstance().yell("Failed to connect to database!");
+            ActionBroadcaster.getInstance().yell("DB failure: "+e.getMessage());
         }
 
     }
@@ -38,22 +43,13 @@ public class OrgsDatabaseController {
 
     }
 
-    private void safeExecute(String request) throws SQLException{
-        Statement stmt = connection.createStatement();
-        try{
-            stmt.executeUpdate(request);
-        }
-        catch (SQLException e){
-            ActionBroadcaster.getInstance().yell("can't execute " + stmt + ": " + e.getMessage());
-            throw e;
-        }
-    }
 
     private void createTableIfNotExists(String tableName, String data) throws SQLException {
             if (!tableExists(tableName)) {
-                safeExecute("CREATE TABLE " + tableName + "(" + data + ")");
+                stmt.executeUpdate("CREATE TABLE " + tableName + "(" + data + ");");
             }
     }
+
 
     private boolean tableExists(String table) throws SQLException {
         DatabaseMetaData dbm = connection.getMetaData();
@@ -61,17 +57,79 @@ public class OrgsDatabaseController {
         return tables.next();
     }
 
-    private void writeSingleOrg(Organization org) throws SQLException{
-        PreparedStatement st = connection.prepareStatement("DELETE FROM ? WHERE string_id='?' ");
+    private void createOrgsTable() throws SQLException{
+        createTableIfNotExists(tablename, "id INTEGER PRIMARY KEY AUTOINCREMENT, string_id TEXT UNIQUE NOT NULL, bank TEXT NOT NULL, members TEXT NOT NULL");
+    }
+
+    public void writeSingleOrg(Organization org){
+        try {
+            stmt.executeUpdate("INSERT OR REPLACE INTO " + tablename + " (id, string_id, bank, members) VALUES ((select id from " + tablename + " where string_id = \"" + org.string_id + "\"), \"" + org.string_id + "\", \"" + org.bank + "\", \"" + mapStringIntegerToSingleString(org.members) + "\")");
+        }
+        catch (SQLException e){
+            ActionBroadcaster.getInstance().yell("Failed to write org: "+e.getMessage());
+        }
+    }
+
+    public void removeSingleOrg(Organization org){
+        try {
+            stmt.executeUpdate("DELETE FROM "+tablename+" WHERE string_id=\""+org.string_id+"\"");
+        }
+        catch (SQLException e){
+            ActionBroadcaster.getInstance().yell("Failed to write org: "+e.getMessage());
+        }
     }
 
 
-    public void writeAll(Set<Organization> organizations){
+    public void writeAll(HashMap<String, Organization> organizations){
+        try {
+            stmt.executeUpdate("DROP TABLE " + tablename);
+            createOrgsTable();
+            for (Object o : organizations.values()) {
+                writeSingleOrg((Organization) o);
+            }
+        }
+        catch (SQLException e){
+            ActionBroadcaster.getInstance().yell("Failed to overwrite organization list: "+e.getMessage());
+        }
+    }
+
+    private String mapStringIntegerToSingleString(HashMap<String, Integer> hs){
+        StringBuilder sb = new StringBuilder();
+        Iterator a = hs.entrySet().iterator();
+        Map.Entry e;
+        while (a.hasNext()){
+            e = (Map.Entry)a.next();
+            sb.append(e.getKey());
+            sb.append(", ");
+            sb.append(e.getValue());
+            sb.append(", ");
+        }
+        return sb.toString();
 
     }
 
-    public Set<Organization> readAll(){
-        return null;
+    private HashMap<String, Integer> singleStringtoMapStringInteger(String str){
+
+        String[] srcarr =  str.split("/([A-Z]|[a-z]|[0-9])(\\w*)/");
+        HashMap<String, Integer> hs = new HashMap<String, Integer>();
+        for(int i = 0; i<srcarr.length; i+=2){
+            hs.put(srcarr[i], Integer.parseInt(srcarr[i+1]));
+        }
+        return hs;
+    }
+
+    public HashMap<String, Organization> readAll(){
+        HashMap<String, Organization> hs = new HashMap<String, Organization>();
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM " + tablename);
+            while (rs.next()) {
+                hs.put(rs.getString("string_id"), new Organization(rs.getString("string_id"), rs.getString("bank"), singleStringtoMapStringInteger(rs.getString("members"))));
+            }
+        }
+        catch (SQLException e){
+            ActionBroadcaster.getInstance().yell("Failed to load organization list: "+e.getMessage());
+        }
+        return hs;
     }
 
 

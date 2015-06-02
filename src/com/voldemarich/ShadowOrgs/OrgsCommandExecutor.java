@@ -13,12 +13,10 @@ import org.bukkit.entity.Player;
  */
 public class OrgsCommandExecutor implements CommandExecutor{
 
-    private final ShadowOrgs plugin;
     private final OrgsManager manager;
-    private enum senders {CONSOLE, PLAYER, ANY}
+    private enum senders {PLAYER, ANY}
 
-    public OrgsCommandExecutor(ShadowOrgs plugin, OrgsManager manager) {
-        this.plugin = plugin; // Store the plugin in situations where you need it.
+    public OrgsCommandExecutor(OrgsManager manager) {
         this.manager = manager;
     }
 
@@ -41,9 +39,7 @@ public class OrgsCommandExecutor implements CommandExecutor{
                 return onCommandMoney(sender, args, 1);
             if (args[0].equals("withdraw") && args.length >= 3 && isEligible(sender, senders.PLAYER, "shadoworgs.basic"))
                 return onCommandMoney(sender, args, -1);
-            if (args[0].equals("setmoney") && args.length >= 3 && isEligible(sender, senders.ANY, "shadoworgs.admin"))
-                return onCommandMoney(sender, args, 0);
-            return false;
+            return args[0].equals("setmoney") && args.length >= 3 && isEligible(sender, senders.ANY, "shadoworgs.admin") && onCommandMoney(sender, args, 0);
         }
         catch (OrganizationException e) {
             sender.sendMessage(e.getMessage());
@@ -52,12 +48,9 @@ public class OrgsCommandExecutor implements CommandExecutor{
     }
 
     private boolean isEligible(CommandSender sender, senders sendertype, String globalright) {
-        return (sendertype == senders.CONSOLE || sendertype == senders.ANY) && sender instanceof ConsoleCommandSender || (sendertype == senders.PLAYER || sendertype == senders.ANY) && sender instanceof Player && sender.hasPermission(globalright);
+        return sender.hasPermission(globalright) && ((sendertype == senders.PLAYER && sender instanceof Player)||sendertype == senders.ANY);
     }
 
-    private boolean hasOrgPermission(Player player, String orgname, int permission){
-            return manager.getOrgByName(orgname).getRight(player) >= permission;
-    }
 
     private boolean onCommandEmpty(CommandSender sender){
         sender.sendMessage("Wrong input, man");
@@ -75,11 +68,8 @@ public class OrgsCommandExecutor implements CommandExecutor{
                 return true;
             }
             if (action == -1) {
-                if (sender instanceof Player && hasOrgPermission((Player)sender, args[1], 2)) {
-                    manager.deleteOrganization(args[1]);
-                }
-                if(sender instanceof ConsoleCommandSender){
-                    manager.deleteOrganization(args[1]);
+                if (manager.hasOrgPermission(sender, args[1], 2)) {
+                    manager.removeOrganization(args[1]);
                 }
                 return true;
             }
@@ -87,37 +77,42 @@ public class OrgsCommandExecutor implements CommandExecutor{
 
     }
 
-    private boolean onCommandMember(CommandSender sender, String[] args, int action){
-            if (action == 1) {
-                if (sender instanceof Player) {
-                    manager.createOrganization(args[1], (Player) sender);
-                }
+    private boolean onCommandMember(CommandSender sender, String[] args, int action) throws OrganizationException{
+        if (action == 1) {
+            if (manager.hasOrgPermission(sender, args[1], 1) || (args[3] != null && manager.hasOrgPermission(sender, args[1], 2))) {
+                if (args[3] != null) manager.addMember(args[1], Bukkit.getPlayer(args[2]), Integer.parseInt(args[3]));
+                else manager.addMember(args[1], Bukkit.getPlayer(args[2]), 0);
                 return true;
             }
-            if (action == 0) {
-
+        }
+        if (action == 0) {
+            if (manager.hasOrgPermission(sender, args[1], 2)) {
+                manager.changeMemberRight(args[1], Bukkit.getPlayer(args[2]), Integer.parseInt(args[3]));
                 return true;
             }
-            if (action == -1) {
-
+            return true;
+        }
+        if (action == -1) {
+            if (manager.hasOrgPermission(sender, args[1], 1) && !manager.hasOrgPermission(Bukkit.getPlayer(args[2]), args[1], 1)) {
+                manager.removeMember(args[1], Bukkit.getPlayer(args[2]));
                 return true;
             }
-            return false;
-    }
+            return true;
+        }
+        return false;
+        }
 
     private boolean onCommandMoney(CommandSender sender, String[] args, int action){
             if (action == 1) {
-                if (sender instanceof Player) {
-                    manager.createOrganization(args[1], (Player) sender);
-                }
+                manager.getOrgByName(args[1]).depositFunds((Player)sender, Double.parseDouble(args[2]));
                 return true;
             }
             if (action == 0) {
-
+                manager.getOrgByName(args[1]).withdrawFunds((Player) sender, Double.parseDouble(args[2]));
                 return true;
             }
             if (action == -1) {
-
+                manager.getOrgByName(args[1]).setFunds(Double.parseDouble(args[2]));
                 return true;
             }
             return false;

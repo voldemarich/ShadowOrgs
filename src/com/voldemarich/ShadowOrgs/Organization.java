@@ -12,8 +12,8 @@ public class Organization {
 
     public String string_id;
 
-    private HashMap<String, Integer> members;
-    private String bank;
+    public HashMap<String, Integer> members;
+    public String bank;
 
     public Organization(String string_id, Player owner){ //As the command of console
         this.string_id = string_id;
@@ -22,7 +22,7 @@ public class Organization {
         ShadowOrgs.econ.createBank(bank, owner.getName());
     }
 
-    public Organization(String string_id, HashMap<String, Integer> members, String bank){ //As database loader object
+    public Organization(String string_id, String bank, HashMap<String, Integer> members){ //As database loader object
         this.string_id = string_id;
         this.members = members;
         this.bank = bank;
@@ -39,24 +39,31 @@ public class Organization {
         else return -1;
     }
 
+    //Declarative commands, runner's rights should be checked before running.
+
+    public void setRight(Player player, int right){
+        if(isMember(player)) {
+            members.put(player.getName(), right);
+        }
+    }
+
     public void addMember(Player player, int right){
         if(!isMember(player)) members.put(player.getName(), right);
     }
 
-    public void addMember(Player player){
-        if(!isMember(player)) members.put(player.getName(), 0);
-    }
 
 
-    public void removeMember(Player player){
+    public void removeMember(Player player) throws OrganizationException{
         if(isMember(player)) members.remove(player.getName());
+        else throw new OrganizationException("Dat player is not in this organization, man");
     }
 
 
     //Here goes economy
+    //Economy uses it's own protection by right, so can be used without checking it one more time.
 
     public boolean withdrawFunds(Player player, double amount){
-        if(ShadowOrgs.econ.bankBalance(bank).balance >= amount){
+        if(ShadowOrgs.econ.bankBalance(bank).balance >= amount && getRight(player)>=0){
             ShadowOrgs.econ.bankWithdraw(bank, amount);
             ShadowOrgs.econ.depositPlayer(player.getName(), amount);
             return true;
