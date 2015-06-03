@@ -16,6 +16,7 @@ public class Organization {
     public String bank;
 
     public Organization(String string_id, Player owner){ //As the command of console
+        members = new HashMap<String, Integer>();
         this.string_id = string_id;
         addMember(owner, 2); //Add admin
         bank = "orgbank_"+ string_id;
@@ -34,6 +35,7 @@ public class Organization {
 
     public int getRight(Player player){
         if(isMember(player)){
+            if(members.get(player.getName())>2) return 2;
             return members.get(player.getName());
         }
         else return -1;
@@ -41,10 +43,11 @@ public class Organization {
 
     //Declarative commands, runner's rights should be checked before running.
 
-    public void setRight(Player player, int right){
+    public void setRight(Player player, int right) throws OrganizationException{
         if(isMember(player)) {
             members.put(player.getName(), right);
         }
+        else throw new OrganizationException("Dat player is not in this organization, man");
     }
 
     public void addMember(Player player, int right){
@@ -66,15 +69,20 @@ public class Organization {
         if(ShadowOrgs.econ.bankBalance(bank).balance >= amount && getRight(player)>=0){
             ShadowOrgs.econ.bankWithdraw(bank, amount);
             ShadowOrgs.econ.depositPlayer(player.getName(), amount);
+            ActionBroadcaster.getInstance().tell(player, "§aYou've withdrawn " + amount + " from " + this.bank);
             return true;
         }
-        else return false;
+        else{
+            ActionBroadcaster.getInstance().tell(player, "§cInsufficient rights/funds");
+            return false;
+        }
     }
 
     public boolean depositFunds(Player player, double amount){
         if(ShadowOrgs.econ.has(player.getName(), amount)){
             ShadowOrgs.econ.withdrawPlayer(player.getName(), amount);
             ShadowOrgs.econ.bankDeposit(bank, amount);
+            ActionBroadcaster.getInstance().tell(player, "§aYou've deposited " + amount + " to " + this.bank);
             return true;
         }
         else return false;

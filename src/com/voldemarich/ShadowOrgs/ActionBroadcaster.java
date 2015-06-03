@@ -21,7 +21,7 @@ public class ActionBroadcaster {
     }
 
     public void tell(CommandSender player, String message){
-        player.sendMessage(message);
+        player.sendMessage("§9[ShadowOrgs]§f "+message);
     }
 
     public void info(String message){

@@ -100,9 +100,9 @@ public class OrgsDatabaseController {
         while (a.hasNext()){
             e = (Map.Entry)a.next();
             sb.append(e.getKey());
-            sb.append(", ");
+            sb.append("\n");
             sb.append(e.getValue());
-            sb.append(", ");
+            sb.append("\n");
         }
         return sb.toString();
 
@@ -110,7 +110,7 @@ public class OrgsDatabaseController {
 
     private HashMap<String, Integer> singleStringtoMapStringInteger(String str){
 
-        String[] srcarr =  str.split("/([A-Z]|[a-z]|[0-9])(\\w*)/");
+        String[] srcarr =  str.split("\n");
         HashMap<String, Integer> hs = new HashMap<String, Integer>();
         for(int i = 0; i<srcarr.length; i+=2){
             hs.put(srcarr[i], Integer.parseInt(srcarr[i+1]));
