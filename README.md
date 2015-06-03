@@ -4,4 +4,6 @@
 Wazzup man. This is kinda organizations plugin compiled for old bukkit 1.4.7.
 Originaly created for ShadowLand server, plugin can be used by everyome wishing.
 
-Currently: development stage, unfinished.
+Currently: alpha released, debugging.
+
+Build artifact .jar available here: https://mega.co.nz/#!GdNRHDYA!JaS-ge8lf-E81ZMX-wX2JNtVa9vOjU7M8DaHdEdjbgA
