@@ -1,13 +1,12 @@
 package com.voldemarich.ShadowOrgs;
 
+import com.google.common.collect.ImmutableBiMap;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by voldemarich on 17.05.15.
@@ -22,16 +21,15 @@ public class OrgsManager {
         return ourInstance;
     }
 
-    public static final Map<Integer, String> rightnames = createMap();
 
-    private static Map<Integer, String> createMap() {
-        Map<Integer, String> result = new HashMap<Integer, String>();
-        result.put(-1, "§7not a member§f");
-        result.put(0, "§bmember§f");
-        result.put(1, "§6moder§f");
-        result.put(2, "§5admin§f"); //TODO spelling without colours
-        return Collections.unmodifiableMap(result);
-    }
+    //BUG wtf returning null on inverse.
+    public static final ImmutableBiMap<String, Integer> rightnames =
+            new ImmutableBiMap.Builder<String, Integer>()
+                    .put("notmember", -1)
+                    .put("member", 0)
+                    .put("moder", 1)
+                    .put("admin", 2)
+                    .build();
 
     private final Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("ShadowOrgs");
 
@@ -40,6 +38,7 @@ public class OrgsManager {
     private final OrgsDatabaseController db = OrgsDatabaseController.getInstance();
 
     private HashMap<String, Organization> organizations;
+    //Todo map<Playername, String[]> orgmember or func retrieving dat
 
     public OrgsManager() {
         organizations = db.readAll();
@@ -73,7 +72,7 @@ public class OrgsManager {
     public void addMember(String orgname, Player member, int right){
         getOrgByName(orgname).addMember(member, right);
         db.writeSingleOrg(organizations.get(orgname));
-        logger.info("Player "+member.getName()+" was added to org with right of "+rightnames.get(right));
+        logger.info("Player "+member.getName()+" was added to org with right of "+rightnames.inverse().get(right));
     }
 
     public void removeMember(String orgname, Player member){
@@ -83,9 +82,13 @@ public class OrgsManager {
     }
 
     public void changeMemberRight(String orgname, Player member, int right){
+        if(right<0){
+            getOrgByName(orgname).removeMember(member);
+            return;
+        }
         getOrgByName(orgname).setRight(member, right);
         db.writeSingleOrg(organizations.get(orgname));
-        logger.info("Player " + member.getName() + " was promoted/demoted to the right of " + rightnames.get(right) + " in the organization " + orgname);
+        logger.info("Player " + member.getName() + " was promoted/demoted to the right of " + rightnames.inverse().get(right) + " in the organization " + orgname);
 
     }
 

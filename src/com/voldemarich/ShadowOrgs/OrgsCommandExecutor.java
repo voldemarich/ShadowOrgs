@@ -90,15 +90,28 @@ public class OrgsCommandExecutor implements CommandExecutor{
 
     private boolean onCommandMember(CommandSender sender, String[] args, int action) throws OrganizationException{
         if (action == 1) {
-            if (manager.hasOrgPermission(sender, args[1], 1) || (args[3] != null && manager.hasOrgPermission(sender, args[1], 2))) {
-                if (args.length >= 4) manager.addMember(args[1], Bukkit.getPlayer(args[2]), Integer.parseInt(args[3]));
-                else manager.addMember(args[1], Bukkit.getPlayer(args[2]), 0);
+            if (manager.hasOrgPermission(sender, args[1], 1) || (args.length>=4 && manager.hasOrgPermission(sender, args[1], 2))) {
+                if (args.length >= 4) manager.addMember(args[1], Bukkit.getOfflinePlayer(args[2]), Integer.parseInt(args[3]));
+                else manager.addMember(args[1], Bukkit.getOfflinePlayer(args[2]), 0);
                 return true;
             }
         }
         if (action == 0) {
             if (manager.hasOrgPermission(sender, args[1], 2)) {
-                manager.changeMemberRight(args[1], Bukkit.getPlayer(args[2]), Integer.parseInt(args[3]));
+                try {
+                    int rt = Integer.parseInt(args[3]);
+                    manager.changeMemberRight(args[1], Bukkit.getPlayer(args[2]), rt);
+                }
+                catch (Exception e){
+                    try {
+                        int rt = manager.rightnames.get(args[3]);
+                        manager.changeMemberRight(args[1], Bukkit.getPlayer(args[2]), rt);
+
+                    }
+                    catch (Exception k){
+                        throw new OrganizationException("Invalid right parameter!");
+                    }
+                }
                 return true;
             }
             return true;
@@ -142,11 +155,11 @@ public class OrgsCommandExecutor implements CommandExecutor{
         sb.append("§eYou requested info on ");
         sb.append(in.string_id);
         sb.append("\n===================================================\n");
-        sb.append("Your access level here is: ");
+        sb.append("Your access level here is: §5");
         if(sender.hasPermission("shadoworgs.admin")) {
-            sb.append(manager.rightnames.get(2));
+            sb.append(manager.rightnames.inverse().get(2));
         }
-        else sb.append(manager.rightnames.get(in.getRight((Player)sender)));
+        else sb.append(manager.rightnames.inverse().get(in.getRight((Player) sender)));
         sb.append("\n");
         if(args.length == 2) sb.append("§eSpecify what you wanna know about this organization\nTry such keywords:\nmembers, rights, economy§f\n");
         else{
