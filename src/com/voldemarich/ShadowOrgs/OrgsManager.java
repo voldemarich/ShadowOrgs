@@ -2,6 +2,7 @@ package com.voldemarich.ShadowOrgs;
 
 import com.google.common.collect.ImmutableBiMap;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -45,10 +46,24 @@ public class OrgsManager {
     }
 
     public boolean hasOrgPermission(CommandSender sender, String orgname, int permission) {
-        return sender.hasPermission("shadoworgs.admin") || getOrgByName(orgname).getRight((Player) sender) >= permission;
+        return sender.hasPermission("shadoworgs.admin") || getOrgByName(orgname).getRight((OfflinePlayer) sender) >= permission;
     }
 
-    public Organization createOrganization(String name, Player owner) throws OrganizationException{
+    public String memberLookup(Player player){
+        StringBuilder sb = new StringBuilder();
+        for(Organization o:organizations.values()){
+            if(o.isMember(player)){
+                sb.append("§eIn §5");
+                sb.append(o.string_id);
+                sb.append("§e as §5");
+                sb.append(rightnames.inverse().get(o.getRight(player)));
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    public Organization createOrganization(String name, OfflinePlayer owner) throws OrganizationException{
         if(!organizations.containsKey(name)){
             Organization org = new Organization(name, owner);
             organizations.put(name, org);
@@ -69,19 +84,19 @@ public class OrgsManager {
         else throw new OrganizationException("Dat org does not exist, man");
     }
 
-    public void addMember(String orgname, Player member, int right){
+    public void addMember(String orgname, OfflinePlayer member, int right){
         getOrgByName(orgname).addMember(member, right);
         db.writeSingleOrg(organizations.get(orgname));
-        logger.info("Player "+member.getName()+" was added to org with right of "+rightnames.inverse().get(right));
+        logger.info("Player " + member.getName() + " was added to organization "+orgname+" with right of " + rightnames.inverse().get(right));
     }
 
-    public void removeMember(String orgname, Player member){
+    public void removeMember(String orgname, OfflinePlayer member){
         getOrgByName(orgname).removeMember(member);
         db.writeSingleOrg(organizations.get(orgname));
         logger.info("Player " + member.getName() + " was removed from org " + orgname);
     }
 
-    public void changeMemberRight(String orgname, Player member, int right){
+    public void changeMemberRight(String orgname, OfflinePlayer member, int right){
         if(right<0){
             getOrgByName(orgname).removeMember(member);
             return;

@@ -8,6 +8,17 @@ import org.bukkit.plugin.java.JavaPlugin;
  * Created by voldemarich on 20.04.15.
  * General plugin class defining startup and quit actions.
  */
+
+
+
+/*
+The most global to_do in this fucking word
+todo Firing wrong input plugin.yml
+todo link WorldGuard to admin
+todo make a separate table for players:members / do dynamic lookup
+todo make a separate table for orgs properties
+
+ */
 public class ShadowOrgs extends JavaPlugin {
 
     public static Economy econ = null;
